@@ -61,7 +61,7 @@
 					<p class="lead">Enter the name of the city.</p>
 				</header>
 				<form id="autocomplete" method="post" class="form-group">
-					<input class="form-control w-50 typeahead" type="text" id="city" name="city" placeholder="E.g: London">
+					<input class="form-control w-50 typeahead" type="text" id="city" name="city" placeholder="E.g: London" value="<?php echo $_POST['city']; ?>">
 					<input class="btn btn-primary" type="submit" name="submit">
 				</form>
 				<div id="results" class="w-100">
