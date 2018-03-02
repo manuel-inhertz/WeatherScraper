@@ -1,30 +1,19 @@
 <?php
-	function curl_get_contents($url)
-	{
-	  $curl = curl_init($url);
-	  curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-	  curl_setopt($curl, CURLOPT_FOLLOWLOCATION, 1);
-	  curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, 0);
-	  curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
-	  $data = curl_exec($curl);
-	  curl_close($curl);
-	  return $data;
-	} 
-
-	$finalResult[0] = "";
+	$weather = "";
 	$error = "";
+	$weatherArray ="";
 
 	if ($_POST){
-		$city = $_POST['city'];
-		$cityArray = explode(" ", $city);
-		$file_headers = @get_headers('https://www.weather-forecast.com/locations/'.implode("-",$cityArray).'/forecasts/latest');
-		if($file_headers[0] == 'HTTP/1.1 404 Not Found') {
-		    $error = "That city could not be found";
+		$urlContents = file_get_contents('http://api.openweathermap.org/data/2.5/weather?q='.urlencode($_POST['city']).'&appid=023fc03f628142cd192f74ef29af3a88');
+		$weatherArray = json_decode($urlContents, true);
+		
+		if ($weatherArray['cod'] == 200) {
+			$weather = "The weather in ".$_POST['city']." is currently ".$weatherArray['weather'][0]['description'].".";
+
+				$tempInCelcius = intval($weatherArray['main']['temp'] - 273);
+			$weather .= " The temperature is ".$tempInCelcius."&deg;C and the wind speed is ".$weatherArray['wind']['speed']."m/s.";
 		} else {
-		$url = 'https://www.weather-forecast.com/locations/'.implode("-",$cityArray).'/forecasts/latest';
-		$content = curl_get_contents($url);
-		$first_step = explode( '<span class="phrase">' , $content );
-		$finalResult = explode("</span>" , $first_step[1] );
+			$error = "Could not find city - please try again.";
 		}
 	}
 ?>
@@ -34,7 +23,7 @@
 	<head>
 		<!-- Required meta tags -->
 		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
 		<title>Weather Scraper</title>
 
 		<!-- Bootstrap CSS -->
@@ -50,6 +39,7 @@
 			    -moz-background-size: cover;
 			    -o-background-size: cover;
 			    background-size: cover;
+			    overflow: hidden;
 			}
 		</style>
 	</head>
@@ -57,7 +47,7 @@
 		<main>
 			<div class="container text-center mt-3">
 				<header>
-					<h1 class="display-4">What's The Weather Like?</h1>
+					<h1>What's The Weather Like?</h1>
 					<p class="lead">Enter the name of the city.</p>
 				</header>
 				<form id="autocomplete" method="post" class="form-group">
@@ -66,11 +56,11 @@
 				</form>
 				<div id="results" class="w-100">
 					<?php 
-						if ($finalResult[0]) {
-							echo "<div class='alert alert-success'><p class='results'>".$finalResult[0]."</p></div>";
-						} else if ($_POST) {
-							echo "<div class='alert alert-danger'><p class='error'>That city could not be found</p></div>";
-						} else {
+						if ($_POST AND $weatherArray['cod'] == 200) {
+							echo "<div class='alert alert-success w-75 m-0 m-auto'><p class='results'>".$weather."</p></div>";
+						} else if ($_POST AND $weatherArray['cod'] != 200) {
+							echo "<div class='alert alert-danger w-50 m-0 m-auto'><p class='error'>".$error."</p></div>";
+						} else if (!$_POST) {
 							echo "<span></span>";
 						}
 					?>
@@ -78,9 +68,7 @@
 			</div>
 		</main>
 		<footer>
-			<center><div class="m-0 m-auto">
-				<p>Weather Info provided by : <a href="https://www.weather-forecast.com/">WeatherForecast.com</a></p>
-			</div></center>
+				
 		</footer>
 
 		<!-- Optional JavaScript -->
@@ -88,6 +76,10 @@
 		<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
 		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
-		<script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+		<script type="text/javascript">
+			document.addEventListener('gesturestart', function (e) {
+			    e.preventDefault();
+			});
+		</script>
 	</body>
 </html>
